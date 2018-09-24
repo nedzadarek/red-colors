@@ -35,6 +35,8 @@ l: layout [
   do [
     rea: make deep-reactor! [
       color-model-changed: 'fuu
+      ; i: 0
+      ; debug-change: is [ i: i + 1 print i print color-model-changed 0]
     ]
 
     temp: none
