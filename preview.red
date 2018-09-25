@@ -29,9 +29,25 @@ to-range: function [n a b] [
   return n
 ]
 
+add-actor: function [add-face 'add-event [word!] add-bl [block!]][
+  add-face/actors: make add-face/actors compose [
+    (to-set-word add-event) function [face event] (quote add-bl)
+  ]
+]
+
 l: layout [
   style color-panel: panel silver
   style field-color-values: text 40 ""
+  style change-slider: slider on-create [
+    face/extra: #()
+    face/extra/last-value: face/data
+    face/extra/on-real-change: function [face bl /extern ] [
+      if face/extra/last-value <> face/data [
+        face/extra/last-value: face/data
+        do bl
+      ]
+    ]
+  ]
   do [
     rea: make deep-reactor! [
       color-model-changed: 'fuu
@@ -53,15 +69,22 @@ l: layout [
 
   rgb: color-panel [
     do [
-      rgb-changed: [
-        rea/color-model-changed: 'rgb
+      rgb-changed: function [f] [
+        if none? f/actors [f/actors: object []]
+        add-actor f on-change [
+            face/extra/on-real-change face [
+              rea/color-model-changed: 'rgb
+            ]
+        ]
       ]
     ]
 
     across
     text "RGB: " return
 
-    rgb-red:   slider rgb-changed
+    rgb-red:   change-slider do [
+      rgb-changed rgb-red
+    ]
     rgb-red-field: field-color-values
 
     ; range check:
@@ -86,7 +109,9 @@ l: layout [
     ]
     return
 
-    rgb-green: slider rgb-changed
+    rgb-green: change-slider do [
+      rgb-changed rgb-green
+    ]
     rgb-green-field: field-color-values
     react [
       rgb-green-field/data: to-integer (255 * rgb-green/data)
@@ -94,7 +119,9 @@ l: layout [
     return
 
 
-    rgb-blue:  slider rgb-changed
+    rgb-blue:  change-slider do [
+      rgb-changed rgb-blue
+    ]
     rgb-blue-field: field-color-values
     react [
       rgb-blue-field/data: to-integer (255 * rgb-blue/data)
@@ -136,29 +163,39 @@ l: layout [
 
   hsv: color-panel [
     do [
-      hsv-changed: [
-        rea/color-model-changed: 'hsv
+      hsv-changed: function [f] [
+        add-actor f on-change [
+            face/extra/on-real-change face [
+              rea/color-model-changed: 'hsv
+            ]
+        ]
       ]
     ]
 
     across
     text "HSV:" return
 
-    hsv-hue: slider hsv-changed
+    hsv-hue: change-slider do [
+      hsv-changed hsv-hue
+    ]
     hsv-hue-field: field-color-values
     react [
       hsv-hue-field/data: to-integer 360 * hsv-hue/data
     ]
     return
 
-    hsv-saturation: slider hsv-changed
+    hsv-saturation: change-slider do [
+      hsv-changed hsv-saturation
+    ]
     hsv-saturation-field: field-color-values
     react [
       hsv-saturation-field/data: round to-percent hsv-saturation/data
     ]
     return
 
-    hsv-value: slider hsv-changed
+    hsv-value: change-slider do [
+      hsv-changed hsv-value
+    ]
     hsv-value-field: field-color-values
     react [
       hsv-value-field/data: round to-percent hsv-value/data
@@ -199,29 +236,39 @@ l: layout [
 
   hsl: color-panel [
     do [
-      hsl-changed: [
-        rea/color-model-changed: 'hsl
+      hsl-changed: function [f] [
+        add-actor f on-change [
+            face/extra/on-real-change face [
+              rea/color-model-changed: 'hsl
+            ]
+        ]
       ]
     ]
 
     across
     text "HSL:" return
 
-    hsl-hue: slider hsl-changed
+    hsl-hue: change-slider  do [
+      hsl-changed hsl-hue
+    ]
     hsl-hue-field: field-color-values
     react [
       hsl-hue-field/data: to-integer 360 * hsl-hue/data
     ]
     return
 
-    hsl-saturation: slider hsl-changed
+    hsl-saturation: change-slider do [
+      hsl-changed hsl-saturation
+    ]
     hsl-saturation-field: field-color-values
     react [
       hsl-saturation-field/data: round to-percent hsl-saturation/data
     ]
     return
 
-    hsl-lightness: slider hsl-changed
+    hsl-lightness: change-slider do [
+      hsl-changed hsl-lightness
+    ]
     hsl-lightness-field: field-color-values
     react [
       hsl-lightness-field/data: round to-percent hsl-lightness/data
@@ -260,36 +307,48 @@ l: layout [
 
   cmyk: color-panel [
     do [
-      cmyk-changed: [
-        rea/color-model-changed: 'cmyk
+      cmyk-changed: function [f] [
+        add-actor f on-change [
+            face/extra/on-real-change face [
+              rea/color-model-changed: 'cmyk
+            ]
+        ]
       ]
     ]
 
     across
     text "CMYK:" return
 
-    cmyk-cyan: slider cmyk-changed
+    cmyk-cyan: change-slider  do [
+      cmyk-changed cmyk-cyan
+    ]
     cmyk-cyan-field: field-color-values
     react [
       cmyk-cyan-field/data: round cmyk-cyan/data
     ]
     return
 
-    cmyk-magenta: slider cmyk-changed
+    cmyk-magenta: change-slider do [
+      cmyk-changed cmyk-magenta
+    ]
     cmyk-magenta-field: field-color-values
     react [
       cmyk-magenta-field/data: round cmyk-magenta/data
     ]
     return
 
-    cmyk-yellow: slider cmyk-changed
+    cmyk-yellow: change-slider do [
+      cmyk-changed cmyk-yellow
+    ]
     cmyk-yellow-field: field-color-values
     react [
       cmyk-yellow-field/data: round cmyk-yellow/data
     ]
     return
 
-    cmyk-black: slider cmyk-changed
+    cmyk-black: change-slider do [
+      cmyk-changed cmyk-black
+    ]
     cmyk-black-field: field-color-values
     react [
       cmyk-black-field/data: round cmyk-black/data
@@ -329,9 +388,16 @@ l: layout [
     ]
   ]
 
+  ; DEBUG
+  do [
+    number-of-changes: 0
+  ]
   color-changed-debug: text react [
     color-changed-debug/text: uppercase to-string rea/color-model-changed
+    number-of-changes: number-of-changes + 1
+    changess/text: to-string number-of-changes
   ]
+  changess: text ""
 
 ]
 view l
